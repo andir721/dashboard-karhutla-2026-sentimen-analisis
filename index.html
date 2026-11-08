@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<!-- Pantau Karhutla — luaran Tugas Akhir Proyek Sains Data, Program Studi Sains Data, ITH.
+     Data dibaca dari data/dashboard_data.json (hasil ekspor notebook). -->
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pantau Persepsi Publik Karhutla Kalimantan</title>
+<meta name="description" content="Bagaimana publik membicarakan kebakaran hutan dan lahan (karhutla) di Kalimantan di media sosial X? Sentimen, tren, wilayah, dan isu yang dibahas.">
+<meta name="author" content="Aril Muhammad Nurham, Rahmawati, Istiqamah, Jason">
+<meta property="og:title" content="Pantau Persepsi Publik Karhutla Kalimantan">
+<meta property="og:description" content="Sentimen, tren, wilayah, dan isu percakapan publik tentang karhutla di Kalimantan.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141414'/%3E%3Cpath d='M16 6c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-7 1-10z' fill='%23e34948'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/dashboard.css?v=1">
+<script>
+  try { var t = localStorage.getItem('karhutla-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  window.KARHUTLA = { statis: 'data/dashboard_data.json', refresh: 600 };
+</script>
+</head>
+<body>
+<a class="sr" href="#isi">Lewati ke isi</a>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="brand" href="./" aria-label="Beranda">
+        <svg width="36" height="36" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/><path d="M16 6c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-7 1-10z" fill="#e34948"/><path d="M16 17c.6 2 2.5 3 2.5 5a2.5 2.5 0 0 1-5 0c0-1.2.8-2 1.3-2.5.1.9.5 1.3.9 1.3 0-1.7-.4-2.8.3-3.8z" fill="#ffd2c9"/></svg>
+        <span><b>Pantau Karhutla</b><small>Suara publik di media sosial X</small></span>
+      </a>
+      <span class="spacer"></span>
+      <span class="pill" id="status-live" role="status"><span class="dot"></span><span>Memuat data…</span></span>
+      <button class="ikon-btn" id="tema" type="button" aria-label="Ganti tema terang/gelap" title="Ganti tema">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+
+    <div class="hero-isi">
+      <div>
+        <p class="eyebrow">Kebakaran hutan & lahan · Kalimantan · <span id="periode-teks">—</span></p>
+        <h1 id="hero-judul">Bagaimana publik membicarakan karhutla?</h1>
+        <p class="lead" id="hero-lead">Unggahan di X tentang karhutla dinilai otomatis oleh model kecerdasan buatan: bernada negatif, netral, atau positif.</p>
+      </div>
+      <div class="hero-angka" aria-live="polite">
+        <div class="label">Nada percakapan · <b id="hero-total">—</b> unggahan</div>
+        <div class="segbar" id="hero-bar" role="img" aria-label="Komposisi sentimen"></div>
+        <div class="komposisi" id="komposisi"></div>
+        <p class="arti-nada">Negatif = keluhan &amp; kritik · Netral = berita &amp; informasi · Positif = harapan &amp; apresiasi</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="filter" aria-label="Filter data">
+  <div class="wrap">
+    <div class="seg" role="group" aria-label="Periode" id="f-hari">
+      <button type="button" data-v="7">7 hari</button>
+      <button type="button" data-v="30">30 hari</button>
+      <button type="button" data-v="90">90 hari</button>
+      <button type="button" data-v="0">Semua</button>
+    </div>
+    <label class="sr" for="f-prov">Provinsi</label>
+    <select id="f-prov" class="pilih">
+      <option value="">Seluruh Kalimantan</option>
+      <option value="kalbar">Kalimantan Barat</option>
+      <option value="kalteng">Kalimantan Tengah</option>
+      <option value="kalsel">Kalimantan Selatan</option>
+      <option value="kaltim">Kalimantan Timur</option>
+      <option value="kaltara">Kalimantan Utara</option>
+    </select>
+    <span class="info" id="f-info"></span>
+  </div>
+</nav>
+
+<main id="isi">
+  <div class="wrap" id="konten">
+    <section class="kartu sorotan" hidden>
+      <h2>Yang perlu diketahui</h2>
+      <ul id="sorotan-isi"></ul>
+    </section>
+
+    <section class="grid g-2 mt">
+      <article class="kartu">
+        <div class="kepala">
+          <div><h2>Kapan karhutla ramai dibicarakan?</h2><p class="desk" id="tren-desk">Jumlah unggahan per waktu, menurut nadanya.</p></div>
+          <div class="seg" id="tren-gran" role="group" aria-label="Satuan waktu">
+            <button type="button" data-v="hari">Harian</button><button type="button" data-v="minggu">Mingguan</button><button type="button" data-v="bulan">Bulanan</button>
+          </div>
+        </div>
+        <div class="chart" id="tren" style="height:360px"></div>
+        <div class="legenda"><span><i class="sw s-neg"></i>Negatif</span><span><i class="sw s-net"></i>Netral</span><span><i class="sw s-pos"></i>Positif</span></div>
+        <details class="tabel"><summary>Lihat sebagai tabel</summary><div class="tbl-wrap" id="tren-tabel"></div></details>
+      </article>
+
+      <article class="kartu">
+        <h2>Wilayah yang paling banyak disebut</h2>
+        <p class="desk">Makin merah, makin sering disebut. Klik provinsi untuk melihat datanya saja.</p>
+        <div class="prov-wrap">
+          <div><div class="chart" id="peta"></div><div class="skala"><span>sedikit</span><span class="ramp"></span><span>banyak</span></div></div>
+          <div class="prov-list" id="prov-list"></div>
+        </div>
+        <div class="tempat" id="tempat" hidden></div>
+        <details class="tabel"><summary>Lihat sebagai tabel</summary><div class="tbl-wrap" id="prov-tabel"></div></details>
+      </article>
+    </section>
+
+    <section class="grid g-2s mt">
+      <div class="tumpuk">
+        <article class="kartu">
+          <h2>Dampak yang dikeluhkan</h2>
+          <p class="desk">Porsi unggahan yang membahas tiap dampak, dan nadanya.</p>
+          <div id="dampak"></div>
+        </article>
+        <article class="kartu">
+          <h2>Negara lain yang ikut disebut</h2>
+          <p class="desk" id="negara-desk">Klik nama negara untuk membaca konteksnya.</p>
+          <p class="cakupan" id="cakupan-negara" hidden></p>
+          <div id="negara"></div>
+        </article>
+      </div>
+      <article class="kartu">
+        <div class="kepala">
+          <div><h2>Topik yang dibicarakan</h2><p class="desk">Kata yang sering muncul bersama dikelompokkan otomatis menjadi topik, lengkap dengan nadanya.</p>
+            <p class="cakupan" id="cakupan-topik" hidden></p></div>
+          <div class="seg" id="topik-mode" role="group" aria-label="Tampilan topik">
+            <button type="button" data-v="daftar" aria-pressed="true">Daftar</button><button type="button" data-v="jaringan">Jaringan</button>
+          </div>
+        </div>
+        <div id="topik"></div>
+        <div hidden><div class="chart" id="jaringan" style="min-height:320px"></div><div class="legenda" id="jaringan-legenda"></div>
+          <p class="catatan-kecil" style="margin-top:8px">Lingkaran = kata (makin besar, makin sering). Garis = sering muncul dalam unggahan yang sama. Arahkan kursor ke kata untuk melihat pasangannya.</p></div>
+      </article>
+    </section>
+
+    <section class="kartu mt">
+      <h2>Kata yang menjadi ciri tiap nada</h2>
+      <p class="desk">Kata yang jauh lebih sering dipakai di satu nada dibanding nada lainnya. Angka = jumlah unggahan.</p>
+      <p class="cakupan" id="cakupan-kk" hidden></p>
+      <div class="grid g-3" id="kata-khas"></div>
+    </section>
+
+    <section class="kartu mt">
+      <div class="kepala">
+        <div><h2>Unggahan terbaru</h2><p class="desk">Tautan dan nama akun sudah dihapus. Label nada adalah tebakan model dan bisa keliru.</p></div>
+        <div class="seg" id="feed-f" role="group" aria-label="Filter nada">
+          <button type="button" data-v="" aria-pressed="true">Semua</button><button type="button" data-v="negatif">Negatif</button><button type="button" data-v="netral">Netral</button><button type="button" data-v="positif">Positif</button>
+        </div>
+      </div>
+      <div class="feed-list" id="feed"></div>
+    </section>
+
+    <section class="kartu mt tentang" id="tentang" aria-labelledby="tentang-judul">
+      <div class="tentang-kepala">
+        <div class="tentang-intro">
+          <p class="tentang-label">Tugas Akhir · Proyek Sains Data · 2026</p>
+          <h2 id="tentang-judul">Tentang penelitian ini</h2>
+          <p class="tentang-lead">Dashboard ini merupakan luaran Tugas Akhir Proyek Sains Data. Penelitian ini memetakan cara warganet di X membicarakan kebakaran hutan dan lahan di Kalimantan sepanjang 2026: nada percakapannya, kapan ramai dibicarakan, wilayah dan dampak yang disebut, serta topik yang muncul.</p>
+        </div>
+        <div class="inst">
+          <img class="inst-logo" src="assets/logo-ith.png" width="64" height="62" alt="Logo Institut Teknologi Bacharuddin Jusuf Habibie">
+          <div class="inst-teks">
+            <b>Program Studi Sains Data</b>
+            <span>Jurusan Sains</span>
+            <span>Institut Teknologi Bacharuddin Jusuf Habibie</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub-judul">Alur penelitian</h3>
+      <ol class="alur">
+        <li><span class="alur-no" aria-hidden="true">1</span><b>Data</b><p>Unggahan publik di X yang membahas karhutla di Kalimantan.</p></li>
+        <li><span class="alur-no" aria-hidden="true">2</span><b>Pembersihan</b><p>Tautan, nama akun, dan unggahan ganda dibuang. Siaran otomatis BMKG tidak dihitung karena bukan opini publik.</p></li>
+        <li><span class="alur-no" aria-hidden="true">3</span><b>Pelabelan awal</b><p>Setiap unggahan diberi label nada awal oleh model sentimen RoBERTa berbahasa Indonesia.</p></li>
+        <li><span class="alur-no" aria-hidden="true">4</span><b>Model</b><p>Teks diubah menjadi vektor XLM-RoBERTa, lalu diklasifikasikan dengan SVM dan Naive Bayes.</p></li>
+        <li><span class="alur-no" aria-hidden="true">5</span><b>Pembaruan</b><p>Data baru dinilai di Google Colab, lalu hasilnya diunggah ke halaman ini.</p></li>
+      </ol>
+
+      <div class="tentang-model">
+        <div class="model-blok">
+          <h3 class="sub-judul">Kinerja model pada data uji</h3>
+          <div class="model-angka" id="model-angka"></div>
+          <p class="catatan-kecil" id="model-ringkas"></p>
+          <div class="model-banding" id="model-banding"></div>
+          <details class="tabel"><summary>Detail teknis model</summary>
+            <div id="model-detail" style="margin-top:10px"></div>
+          </details>
+        </div>
+        <aside class="ingat" aria-label="Perlu diingat">
+          <h3>Perlu diingat</h3>
+          <ul>
+            <li>Model bisa keliru, terutama pada sindiran.</li>
+            <li>Wilayah dan dampak dikenali dari kata kunci, jadi angkanya perkiraan.</li>
+            <li>Dashboard ini menggambarkan percakapan di X, bukan pendapat seluruh masyarakat.</li>
+          </ul>
+        </aside>
+      </div>
+
+      <div class="tim">
+        <div class="tim-blok">
+          <h3 class="sub-judul">Disusun oleh</h3>
+          <ul class="orang orang-4">
+            <li><span class="inisial" aria-hidden="true">AN</span><span><b>Aril Muhammad Nurham</b><small>NIM <span class="num">241061012</span></small></span></li>
+            <li><span class="inisial" aria-hidden="true">R</span><span><b>Rahmawati</b><small>NIM <span class="num">241061003</span></small></span></li>
+            <li><span class="inisial" aria-hidden="true">I</span><span><b>Istiqamah</b><small>NIM <span class="num">241061025</span></small></span></li>
+            <li><span class="inisial" aria-hidden="true">J</span><span><b>Jason</b><small>NIM <span class="num">231061012</span></small></span></li>
+          </ul>
+        </div>
+        <div class="tim-blok">
+          <h3 class="sub-judul">Pembimbing</h3>
+          <ul class="orang">
+            <li><span class="inisial pb" aria-hidden="true">AJ</span><span><b>Andi Indra Jaya, S.Stat., M.Stat.</b><small>Pembimbing I</small></span></li>
+            <li><span class="inisial pb" aria-hidden="true">A</span><span><b>Anas, M.Kom</b><small>Pembimbing II</small></span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Tugas Akhir Proyek Sains Data · Program Studi Sains Data · Institut Teknologi Bacharuddin Jusuf Habibie · Sumber: media sosial X · Waktu dalam WIB</span>
+    <span id="footer-kanan">—</span>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="assets/data-statis.js?v=1"></script>
+<script src="assets/dashboard.js?v=1"></script>
+</body>
+</html>
